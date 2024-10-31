@@ -5,7 +5,9 @@ import io.github.aglushkovsky.common.dialog.Dialog;
 import io.github.aglushkovsky.common.input_validator.InputValidator;
 import io.github.aglushkovsky.common.input_validator.RangeValidator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Launcher {
@@ -73,26 +75,57 @@ public class Launcher {
     }
 
     public static class Builder {
-        private final Launcher launcher = new Launcher();
+        private final List<ActionRecord> actionRecords = new ArrayList<>();
 
         public Builder addAction(String description, Action action) {
-            launcher.addAction(description, action);
+            actionRecords.add(ActionRecord.of(description, action));
             return this;
         }
 
-        private void setDialog() {
-            InputValidator inputValidator = createInputValidator();
+        private void setDialog(Launcher launcher) {
+            InputValidator inputValidator = createInputValidator(launcher);
             ConsoleDialog consoleDialog = new ConsoleDialog(inputValidator);
             launcher.setDialog(consoleDialog);
         }
 
-        private InputValidator createInputValidator() {
+        private InputValidator createInputValidator(Launcher launcher) {
             return new RangeValidator(launcher.getStartCommandId(), launcher.getCommandIdSequence() - 1);
         }
 
         public Launcher build() {
-            setDialog();
-            return launcher;
+            Launcher launcherInstance = new Launcher();
+            addAllActions(launcherInstance);
+            setDialog(launcherInstance);
+            actionRecords.clear();
+            return launcherInstance;
+        }
+
+        private void addAllActions(Launcher launcherInstance) {
+            for (var actionRecord : actionRecords) {
+                launcherInstance.addAction(actionRecord.getDescription(), actionRecord.getAction());
+            }
+        }
+
+        private static class ActionRecord {
+            String description;
+            Action action;
+
+            public static ActionRecord of(String description, Action action) {
+                return new ActionRecord(description, action);
+            }
+
+            private ActionRecord(String description, Action action) {
+                this.description = description;
+                this.action = action;
+            }
+
+            public String getDescription() {
+                return description;
+            }
+
+            public Action getAction() {
+                return action;
+            }
         }
     }
 }
